@@ -44,6 +44,45 @@ extern "C"
                         const char *curve,
                         const char *message);
 
+    extern char *c_sign_mta(const char *node_1_url,
+                            const char *token,
+                            const char *key_id,
+                            const char *encrypted_share,
+                            const char *secret_store,
+                            const char *message);
+
+    extern char *c_sign_mta_derived(const char *node_1_url,
+                                    const char *token,
+                                    const char *key_id,
+                                    const char *encrypted_share,
+                                    const char *secret_store,
+                                    const char *message,
+                                    const char *chain_code,
+                                    const char *path);
+
+    extern char *c_sign_with_chain_code(const char *node_1_url,
+                                        const char *token,
+                                        const char *key_id,
+                                        const char *encrypted_share,
+                                        const char *secret_store,
+                                        const char *curve,
+                                        const char *message,
+                                        const char *chain_code,
+                                        const char *path);
+
+    extern char *c_public_key_with_chain_code(const char *key_id,
+                                              const char *encrypted_share,
+                                              const char *secret_store,
+                                              const char *curve,
+                                              const char *chain_code,
+                                              const char *path);
+
+    extern char *c_import_private_key_to_share(const char *node_1_url,
+                                               const char *node_2_url,
+                                               const char *token,
+                                               const char *private_key,
+                                               const char *password);
+
     extern void c_string_free(char *s);
 
 #ifdef __cplusplus

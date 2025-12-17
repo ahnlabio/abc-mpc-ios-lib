@@ -48,6 +48,50 @@ private func c_sign(_ node_1_url: UnsafePointer<CChar>,
                     _ curve: UnsafePointer<CChar>,
                     _ message: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
+@_silgen_name("c_sign_mta")
+private func c_sign_mta(_ node_1_url: UnsafePointer<CChar>,
+                        _ token: UnsafePointer<CChar>,
+                        _ key_id: UnsafePointer<CChar>,
+                        _ encrypted_share: UnsafePointer<CChar>,
+                        _ secret_store: UnsafePointer<CChar>,
+                        _ message: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+
+@_silgen_name("c_sign_mta_derived")
+private func c_sign_mta_derived(_ node_1_url: UnsafePointer<CChar>,
+                                _ token: UnsafePointer<CChar>,
+                                _ key_id: UnsafePointer<CChar>,
+                                _ encrypted_share: UnsafePointer<CChar>,
+                                _ secret_store: UnsafePointer<CChar>,
+                                _ message: UnsafePointer<CChar>,
+                                _ chain_code: UnsafePointer<CChar>,
+                                _ path: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+
+@_silgen_name("c_sign_with_chain_code")
+private func c_sign_with_chain_code(_ node_1_url: UnsafePointer<CChar>,
+                                    _ token: UnsafePointer<CChar>,
+                                    _ key_id: UnsafePointer<CChar>,
+                                    _ encrypted_share: UnsafePointer<CChar>,
+                                    _ secret_store: UnsafePointer<CChar>,
+                                    _ curve: UnsafePointer<CChar>,
+                                    _ message: UnsafePointer<CChar>,
+                                    _ chain_code: UnsafePointer<CChar>,
+                                    _ path: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+
+@_silgen_name("c_public_key_with_chain_code")
+private func c_public_key_with_chain_code(_ key_id: UnsafePointer<CChar>,
+                                          _ encrypted_share: UnsafePointer<CChar>,
+                                          _ secret_store: UnsafePointer<CChar>,
+                                          _ curve: UnsafePointer<CChar>,
+                                          _ chain_code: UnsafePointer<CChar>,
+                                          _ path: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+
+@_silgen_name("c_import_private_key_to_share")
+private func c_import_private_key_to_share(_ node_1_url: UnsafePointer<CChar>,
+                                           _ node_2_url: UnsafePointer<CChar>,
+                                           _ token: UnsafePointer<CChar>,
+                                           _ private_key: UnsafePointer<CChar>,
+                                           _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+
 @_silgen_name("c_string_free")
 private func c_string_free(_ s: UnsafeMutablePointer<CChar>?)
 //
@@ -249,5 +293,192 @@ public func sign(
     let response = String(cString: ptr)
     c_string_free(ptr)
     let result = response.parseMpcResponse(as: SignResponse.self)
+    return result
+}
+
+/// MTA 프로토콜을 사용한 secp256k1 서명
+public func sign_mta(
+    node_1_url: String,
+    token: String,
+    key_id: String,
+    encrypted_share: String,
+    secret_store: String,
+    message: String
+) async -> Result<SignResponse, MpcError> {
+    var resultPtr: UnsafeMutablePointer<CChar>?
+
+    node_1_url.withCString { node_1_urlPtr in
+        token.withCString { tokenPtr in
+            key_id.withCString { key_idPtr in
+                encrypted_share.withCString { encrypted_sharePtr in
+                    secret_store.withCString { secret_storePtr in
+                        message.withCString { messagePtr in
+                            resultPtr = c_sign_mta(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    guard let ptr = resultPtr else {
+        return .failure(MpcError.operationFailed("Failed to sign with MTA"))
+    }
+
+    let response = String(cString: ptr)
+    c_string_free(ptr)
+    let result = response.parseMpcResponse(as: SignResponse.self)
+    return result
+}
+
+/// MTA 프로토콜을 사용한 secp256k1 파생 키 서명
+public func sign_mta_derived(
+    node_1_url: String,
+    token: String,
+    key_id: String,
+    encrypted_share: String,
+    secret_store: String,
+    message: String,
+    chain_code: String,
+    path: String
+) async -> Result<SignResponse, MpcError> {
+    var resultPtr: UnsafeMutablePointer<CChar>?
+
+    node_1_url.withCString { node_1_urlPtr in
+        token.withCString { tokenPtr in
+            key_id.withCString { key_idPtr in
+                encrypted_share.withCString { encrypted_sharePtr in
+                    secret_store.withCString { secret_storePtr in
+                        message.withCString { messagePtr in
+                            chain_code.withCString { chain_codePtr in
+                                path.withCString { pathPtr in
+                                    resultPtr = c_sign_mta_derived(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr, chain_codePtr, pathPtr)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    guard let ptr = resultPtr else {
+        return .failure(MpcError.operationFailed("Failed to sign with MTA derived"))
+    }
+
+    let response = String(cString: ptr)
+    c_string_free(ptr)
+    let result = response.parseMpcResponse(as: SignResponse.self)
+    return result
+}
+
+/// 체인코드와 경로를 사용한 파생 키 서명 (secp256k1, ed25519 모두 지원)
+public func sign_with_chain_code(
+    node_1_url: String,
+    token: String,
+    key_id: String,
+    encrypted_share: String,
+    secret_store: String,
+    curve: String,
+    message: String,
+    chain_code: String,
+    path: String
+) async -> Result<SignResponse, MpcError> {
+    var resultPtr: UnsafeMutablePointer<CChar>?
+
+    node_1_url.withCString { node_1_urlPtr in
+        token.withCString { tokenPtr in
+            key_id.withCString { key_idPtr in
+                encrypted_share.withCString { encrypted_sharePtr in
+                    secret_store.withCString { secret_storePtr in
+                        curve.withCString { curvePtr in
+                            message.withCString { messagePtr in
+                                chain_code.withCString { chain_codePtr in
+                                    path.withCString { pathPtr in
+                                        resultPtr = c_sign_with_chain_code(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr, chain_codePtr, pathPtr)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    guard let ptr = resultPtr else {
+        return .failure(MpcError.operationFailed("Failed to sign with chain code"))
+    }
+
+    let response = String(cString: ptr)
+    c_string_free(ptr)
+    let result = response.parseMpcResponse(as: SignResponse.self)
+    return result
+}
+
+/// 체인코드와 경로를 사용한 파생 공개키 조회 (secp256k1, ed25519 모두 지원)
+public func public_key_with_chain_code(
+    key_id: String,
+    encrypted_share: String,
+    secret_store: String,
+    curve: String,
+    chain_code: String,
+    path: String
+) async -> Result<PublicKeyResponse, MpcError> {
+    var resultPtr: UnsafeMutablePointer<CChar>?
+
+    key_id.withCString { key_idPtr in
+        encrypted_share.withCString { encrypted_sharePtr in
+            secret_store.withCString { secret_storePtr in
+                curve.withCString { curvePtr in
+                    chain_code.withCString { chain_codePtr in
+                        path.withCString { pathPtr in
+                            resultPtr = c_public_key_with_chain_code(key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, chain_codePtr, pathPtr)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    guard let ptr = resultPtr else {
+        return .failure(MpcError.operationFailed("Failed to get public key with chain code"))
+    }
+
+    let response = String(cString: ptr)
+    c_string_free(ptr)
+    let result = response.parseMpcResponse(as: PublicKeyResponse.self)
+    return result
+}
+
+/// 기존 secp256k1 개인키를 MPC 키 공유로 변환
+public func import_private_key_to_share(
+    node_1_url: String,
+    node_2_url: String,
+    token: String,
+    private_key: String,
+    password: String
+) async -> Result<GenerateShareResponse, MpcError> {
+    var resultPtr: UnsafeMutablePointer<CChar>?
+
+    node_1_url.withCString { node_1_urlPtr in
+        node_2_url.withCString { node_2_urlPtr in
+            token.withCString { tokenPtr in
+                private_key.withCString { private_keyPtr in
+                    password.withCString { passwordPtr in
+                        resultPtr = c_import_private_key_to_share(node_1_urlPtr, node_2_urlPtr, tokenPtr, private_keyPtr, passwordPtr)
+                    }
+                }
+            }
+        }
+    }
+
+    guard let ptr = resultPtr else {
+        return .failure(MpcError.operationFailed("Failed to import private key to share"))
+    }
+
+    let response = String(cString: ptr)
+    c_string_free(ptr)
+    let result = response.parseMpcResponse(as: GenerateShareResponse.self)
     return result
 }

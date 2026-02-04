@@ -31,13 +31,15 @@ private func c_randomc_validate_password_and_secret_store_recover_share(_ passwo
 
 @_silgen_name("c_validate_share_and_secret_store")
 private func c_validate_share_and_secret_store(_ secret_sotre: UnsafePointer<CChar>,
-                                            _ encrypted_share: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+                                            _ encrypted_share: UnsafePointer<CChar>,
+                                            _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
 @_silgen_name("c_public_key")
 private func c_public_key(_ key_id: UnsafePointer<CChar>,
                     _ encrypted_share: UnsafePointer<CChar>,
                     _ secret_store: UnsafePointer<CChar>,
-                    _ curve: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+                    _ curve: UnsafePointer<CChar>,
+                    _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
 @_silgen_name("c_sign")
 private func c_sign(_ node_1_url: UnsafePointer<CChar>,
@@ -46,7 +48,8 @@ private func c_sign(_ node_1_url: UnsafePointer<CChar>,
                     _ encrypted_share: UnsafePointer<CChar>,
                     _ secret_store: UnsafePointer<CChar>,
                     _ curve: UnsafePointer<CChar>,
-                    _ message: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+                    _ message: UnsafePointer<CChar>,
+                    _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
 @_silgen_name("c_sign_mta")
 private func c_sign_mta(_ node_1_url: UnsafePointer<CChar>,
@@ -54,7 +57,8 @@ private func c_sign_mta(_ node_1_url: UnsafePointer<CChar>,
                         _ key_id: UnsafePointer<CChar>,
                         _ encrypted_share: UnsafePointer<CChar>,
                         _ secret_store: UnsafePointer<CChar>,
-                        _ message: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+                        _ message: UnsafePointer<CChar>,
+                        _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
 @_silgen_name("c_sign_mta_derived")
 private func c_sign_mta_derived(_ node_1_url: UnsafePointer<CChar>,
@@ -64,7 +68,8 @@ private func c_sign_mta_derived(_ node_1_url: UnsafePointer<CChar>,
                                 _ secret_store: UnsafePointer<CChar>,
                                 _ message: UnsafePointer<CChar>,
                                 _ chain_code: UnsafePointer<CChar>,
-                                _ path: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+                                _ path: UnsafePointer<CChar>,
+                                _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
 @_silgen_name("c_sign_with_chain_code")
 private func c_sign_with_chain_code(_ node_1_url: UnsafePointer<CChar>,
@@ -75,7 +80,8 @@ private func c_sign_with_chain_code(_ node_1_url: UnsafePointer<CChar>,
                                     _ curve: UnsafePointer<CChar>,
                                     _ message: UnsafePointer<CChar>,
                                     _ chain_code: UnsafePointer<CChar>,
-                                    _ path: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+                                    _ path: UnsafePointer<CChar>,
+                                    _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
 @_silgen_name("c_public_key_with_chain_code")
 private func c_public_key_with_chain_code(_ key_id: UnsafePointer<CChar>,
@@ -83,7 +89,8 @@ private func c_public_key_with_chain_code(_ key_id: UnsafePointer<CChar>,
                                           _ secret_store: UnsafePointer<CChar>,
                                           _ curve: UnsafePointer<CChar>,
                                           _ chain_code: UnsafePointer<CChar>,
-                                          _ path: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+                                          _ path: UnsafePointer<CChar>,
+                                          _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
 @_silgen_name("c_import_private_key_to_share")
 private func c_import_private_key_to_share(_ node_1_url: UnsafePointer<CChar>,
@@ -211,20 +218,23 @@ public func validate_password_and_secret_store(
 public func validate_share_and_secret_store(
     encrypted_share: String,
     secret_store: String,
+    password: String
 ) async -> Result<ValidateShareAndSecretStoreResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
 
         encrypted_share.withCString { encrypted_sharePtr in
             secret_store.withCString { secret_storePtr in
-                resultPtr = c_validate_share_and_secret_store(encrypted_sharePtr, secret_storePtr)
+                password.withCString { passwordPtr in
+                    resultPtr = c_validate_share_and_secret_store(encrypted_sharePtr, secret_storePtr, passwordPtr)
+                }
             }
         }
-    
-    
+
+
     guard let ptr = resultPtr else {
         return .failure(MpcError.operationFailed("Failed to validate share and secret store"))
     }
-    
+
     let response = String(cString: ptr)
     c_string_free(ptr)
     let result = response.parseMpcResponse(as: ValidateShareAndSecretStoreResponse.self)
@@ -235,7 +245,8 @@ public func public_key(
     key_id: String,
     encrypted_share: String,
     secret_store: String,
-    curve: String
+    curve: String,
+    password: String
 ) async -> Result<PublicKeyResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
 
@@ -243,16 +254,18 @@ public func public_key(
         encrypted_share.withCString { encrypted_sharePtr in
             secret_store.withCString { secret_storePtr in
                 curve.withCString { curvePtr in
-                    resultPtr = c_public_key(key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr)
+                    password.withCString { passwordPtr in
+                        resultPtr = c_public_key(key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, passwordPtr)
+                    }
                 }
             }
         }
     }
-    
+
     guard let ptr = resultPtr else {
         return .failure(MpcError.operationFailed("Failed to get public key"))
     }
-    
+
     let response = String(cString: ptr)
     c_string_free(ptr)
     let result = response.parseMpcResponse(as: PublicKeyResponse.self)
@@ -266,7 +279,8 @@ public func sign(
     encrypted_share: String,
     secret_store: String,
     curve: String,
-    message: String
+    message: String,
+    password: String
 ) async -> Result<SignResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
 
@@ -277,7 +291,9 @@ public func sign(
                     secret_store.withCString { secret_storePtr in
                         curve.withCString { curvePtr in
                             message.withCString { messagePtr in
-                                resultPtr = c_sign(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr)
+                                password.withCString { passwordPtr in
+                                    resultPtr = c_sign(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr, passwordPtr)
+                                }
                             }
                         }
                     }
@@ -285,11 +301,11 @@ public func sign(
             }
         }
     }
-    
+
     guard let ptr = resultPtr else {
         return .failure(MpcError.operationFailed("Failed to sign"))
     }
-    
+
     let response = String(cString: ptr)
     c_string_free(ptr)
     let result = response.parseMpcResponse(as: SignResponse.self)
@@ -303,7 +319,8 @@ public func sign_mta(
     key_id: String,
     encrypted_share: String,
     secret_store: String,
-    message: String
+    message: String,
+    password: String
 ) async -> Result<SignResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
 
@@ -313,7 +330,9 @@ public func sign_mta(
                 encrypted_share.withCString { encrypted_sharePtr in
                     secret_store.withCString { secret_storePtr in
                         message.withCString { messagePtr in
-                            resultPtr = c_sign_mta(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr)
+                            password.withCString { passwordPtr in
+                                resultPtr = c_sign_mta(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr, passwordPtr)
+                            }
                         }
                     }
                 }
@@ -340,7 +359,8 @@ public func sign_mta_derived(
     secret_store: String,
     message: String,
     chain_code: String,
-    path: String
+    path: String,
+    password: String
 ) async -> Result<SignResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
 
@@ -352,7 +372,9 @@ public func sign_mta_derived(
                         message.withCString { messagePtr in
                             chain_code.withCString { chain_codePtr in
                                 path.withCString { pathPtr in
-                                    resultPtr = c_sign_mta_derived(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr, chain_codePtr, pathPtr)
+                                    password.withCString { passwordPtr in
+                                        resultPtr = c_sign_mta_derived(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr, chain_codePtr, pathPtr, passwordPtr)
+                                    }
                                 }
                             }
                         }
@@ -382,7 +404,8 @@ public func sign_with_chain_code(
     curve: String,
     message: String,
     chain_code: String,
-    path: String
+    path: String,
+    password: String
 ) async -> Result<SignResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
 
@@ -395,7 +418,9 @@ public func sign_with_chain_code(
                             message.withCString { messagePtr in
                                 chain_code.withCString { chain_codePtr in
                                     path.withCString { pathPtr in
-                                        resultPtr = c_sign_with_chain_code(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr, chain_codePtr, pathPtr)
+                                        password.withCString { passwordPtr in
+                                            resultPtr = c_sign_with_chain_code(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr, chain_codePtr, pathPtr, passwordPtr)
+                                        }
                                     }
                                 }
                             }
@@ -423,7 +448,8 @@ public func public_key_with_chain_code(
     secret_store: String,
     curve: String,
     chain_code: String,
-    path: String
+    path: String,
+    password: String
 ) async -> Result<PublicKeyResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
 
@@ -433,7 +459,9 @@ public func public_key_with_chain_code(
                 curve.withCString { curvePtr in
                     chain_code.withCString { chain_codePtr in
                         path.withCString { pathPtr in
-                            resultPtr = c_public_key_with_chain_code(key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, chain_codePtr, pathPtr)
+                            password.withCString { passwordPtr in
+                                resultPtr = c_public_key_with_chain_code(key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, chain_codePtr, pathPtr, passwordPtr)
+                            }
                         }
                     }
                 }

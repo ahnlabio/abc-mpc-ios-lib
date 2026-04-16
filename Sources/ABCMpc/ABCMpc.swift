@@ -11,15 +11,17 @@ private func c_random_key_id() -> UnsafeMutablePointer<CChar>?
 @_silgen_name("c_random_generate_share")
 private func c_random_generate_share(_ node_1_url: UnsafePointer<CChar>,
                               _ node_2_url: UnsafePointer<CChar>,
+                              _ auth_token: UnsafePointer<CChar>,
+                              _ mpc_token: UnsafePointer<CChar>,
                               _ key_id: UnsafePointer<CChar>,
-                              _ token: UnsafePointer<CChar>,
                               _ curve: UnsafePointer<CChar>,
                               _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
 @_silgen_name("c_random_recover_share")
 private func c_random_recover_share(_ node_1_url: UnsafePointer<CChar>,
                               _ node_2_url: UnsafePointer<CChar>,
-                              _ token: UnsafePointer<CChar>,
+                              _ auth_token: UnsafePointer<CChar>,
+                              _ mpc_token: UnsafePointer<CChar>,
                               _ target_key_id: UnsafePointer<CChar>,
                               _ source_key_id: UnsafePointer<CChar>,
                               _ curve: UnsafePointer<CChar>,
@@ -43,7 +45,8 @@ private func c_public_key(_ key_id: UnsafePointer<CChar>,
 
 @_silgen_name("c_sign")
 private func c_sign(_ node_1_url: UnsafePointer<CChar>,
-                    _ token: UnsafePointer<CChar>,
+                    _ auth_token: UnsafePointer<CChar>,
+                    _ mpc_token: UnsafePointer<CChar>,
                     _ key_id: UnsafePointer<CChar>,
                     _ encrypted_share: UnsafePointer<CChar>,
                     _ secret_store: UnsafePointer<CChar>,
@@ -53,7 +56,8 @@ private func c_sign(_ node_1_url: UnsafePointer<CChar>,
 
 @_silgen_name("c_sign_mta")
 private func c_sign_mta(_ node_1_url: UnsafePointer<CChar>,
-                        _ token: UnsafePointer<CChar>,
+                        _ auth_token: UnsafePointer<CChar>,
+                        _ mpc_token: UnsafePointer<CChar>,
                         _ key_id: UnsafePointer<CChar>,
                         _ encrypted_share: UnsafePointer<CChar>,
                         _ secret_store: UnsafePointer<CChar>,
@@ -62,7 +66,8 @@ private func c_sign_mta(_ node_1_url: UnsafePointer<CChar>,
 
 @_silgen_name("c_sign_mta_derived")
 private func c_sign_mta_derived(_ node_1_url: UnsafePointer<CChar>,
-                                _ token: UnsafePointer<CChar>,
+                                _ auth_token: UnsafePointer<CChar>,
+                                _ mpc_token: UnsafePointer<CChar>,
                                 _ key_id: UnsafePointer<CChar>,
                                 _ encrypted_share: UnsafePointer<CChar>,
                                 _ secret_store: UnsafePointer<CChar>,
@@ -73,7 +78,8 @@ private func c_sign_mta_derived(_ node_1_url: UnsafePointer<CChar>,
 
 @_silgen_name("c_sign_with_chain_code")
 private func c_sign_with_chain_code(_ node_1_url: UnsafePointer<CChar>,
-                                    _ token: UnsafePointer<CChar>,
+                                    _ auth_token: UnsafePointer<CChar>,
+                                    _ mpc_token: UnsafePointer<CChar>,
                                     _ key_id: UnsafePointer<CChar>,
                                     _ encrypted_share: UnsafePointer<CChar>,
                                     _ secret_store: UnsafePointer<CChar>,
@@ -95,7 +101,8 @@ private func c_public_key_with_chain_code(_ key_id: UnsafePointer<CChar>,
 @_silgen_name("c_import_private_key_to_share")
 private func c_import_private_key_to_share(_ node_1_url: UnsafePointer<CChar>,
                                            _ node_2_url: UnsafePointer<CChar>,
-                                           _ token: UnsafePointer<CChar>,
+                                           _ auth_token: UnsafePointer<CChar>,
+                                           _ mpc_token: UnsafePointer<CChar>,
                                            _ private_key: UnsafePointer<CChar>,
                                            _ password: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
 
@@ -125,8 +132,9 @@ public func generate_key_id() async -> Result<KeyIdResponse, MpcError> {
 public func generate_share(
     node_1_url: String,
     node_2_url: String,
+    auth_token: String,
+    mpc_token: String,
     key_id: String,
-    token: String,
     curve: String,
     password: String
 ) async -> Result<GenerateShareResponse, MpcError> {
@@ -134,11 +142,13 @@ public func generate_share(
 
     node_1_url.withCString { node_1_urlPtr in
         node_2_url.withCString { node_2_urlPtr in
-            token.withCString { tokenPtr in
-                key_id.withCString { keyIdPtr in
-                    curve.withCString { curvePtr in
-                        password.withCString { passwordPtr in
-                            resultPtr = c_random_generate_share(node_1_urlPtr, node_2_urlPtr, tokenPtr, keyIdPtr, curvePtr, passwordPtr)
+            auth_token.withCString { authTokenPtr in
+                mpc_token.withCString { mpcTokenPtr in
+                    key_id.withCString { keyIdPtr in
+                        curve.withCString { curvePtr in
+                            password.withCString { passwordPtr in
+                                resultPtr = c_random_generate_share(node_1_urlPtr, node_2_urlPtr, authTokenPtr, mpcTokenPtr, keyIdPtr, curvePtr, passwordPtr)
+                            }
                         }
                     }
                 }
@@ -159,7 +169,8 @@ public func generate_share(
 public func recover_share(
     node_1_url: String,
     node_2_url: String,
-    token: String,
+    auth_token: String,
+    mpc_token: String,
     target_key_id: String,
     source_key_id: String,
     curve: String,
@@ -169,12 +180,14 @@ public func recover_share(
 
     node_1_url.withCString { node_1_urlPtr in
         node_2_url.withCString { node_2_urlPtr in
-            token.withCString { tokenPtr in
-                target_key_id.withCString { target_key_idPtr in
-                    source_key_id.withCString { source_key_idPtr in
-                        curve.withCString { curvePtr in
-                            password.withCString { passwordPtr in
-                                resultPtr = c_random_recover_share(node_1_urlPtr, node_2_urlPtr, tokenPtr, target_key_idPtr, source_key_idPtr, curvePtr, passwordPtr)
+            auth_token.withCString { authTokenPtr in
+                mpc_token.withCString { mpcTokenPtr in
+                    target_key_id.withCString { target_key_idPtr in
+                        source_key_id.withCString { source_key_idPtr in
+                            curve.withCString { curvePtr in
+                                password.withCString { passwordPtr in
+                                    resultPtr = c_random_recover_share(node_1_urlPtr, node_2_urlPtr, authTokenPtr, mpcTokenPtr, target_key_idPtr, source_key_idPtr, curvePtr, passwordPtr)
+                                }
                             }
                         }
                     }
@@ -274,7 +287,8 @@ public func public_key(
 
 public func sign(
     node_1_url: String,
-    token: String,
+    auth_token: String,
+    mpc_token: String,
     key_id: String,
     encrypted_share: String,
     secret_store: String,
@@ -285,14 +299,16 @@ public func sign(
     var resultPtr: UnsafeMutablePointer<CChar>?
 
     node_1_url.withCString { node_1_urlPtr in
-        token.withCString { tokenPtr in
-            key_id.withCString { key_idPtr in
-                encrypted_share.withCString { encrypted_sharePtr in
-                    secret_store.withCString { secret_storePtr in
-                        curve.withCString { curvePtr in
-                            message.withCString { messagePtr in
-                                password.withCString { passwordPtr in
-                                    resultPtr = c_sign(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr, passwordPtr)
+        auth_token.withCString { authTokenPtr in
+            mpc_token.withCString { mpcTokenPtr in
+                key_id.withCString { key_idPtr in
+                    encrypted_share.withCString { encrypted_sharePtr in
+                        secret_store.withCString { secret_storePtr in
+                            curve.withCString { curvePtr in
+                                message.withCString { messagePtr in
+                                    password.withCString { passwordPtr in
+                                        resultPtr = c_sign(node_1_urlPtr, authTokenPtr, mpcTokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr, passwordPtr)
+                                    }
                                 }
                             }
                         }
@@ -315,7 +331,8 @@ public func sign(
 /// MTA 프로토콜을 사용한 secp256k1 서명
 public func sign_mta(
     node_1_url: String,
-    token: String,
+    auth_token: String,
+    mpc_token: String,
     key_id: String,
     encrypted_share: String,
     secret_store: String,
@@ -325,13 +342,15 @@ public func sign_mta(
     var resultPtr: UnsafeMutablePointer<CChar>?
 
     node_1_url.withCString { node_1_urlPtr in
-        token.withCString { tokenPtr in
-            key_id.withCString { key_idPtr in
-                encrypted_share.withCString { encrypted_sharePtr in
-                    secret_store.withCString { secret_storePtr in
-                        message.withCString { messagePtr in
-                            password.withCString { passwordPtr in
-                                resultPtr = c_sign_mta(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr, passwordPtr)
+        auth_token.withCString { authTokenPtr in
+            mpc_token.withCString { mpcTokenPtr in
+                key_id.withCString { key_idPtr in
+                    encrypted_share.withCString { encrypted_sharePtr in
+                        secret_store.withCString { secret_storePtr in
+                            message.withCString { messagePtr in
+                                password.withCString { passwordPtr in
+                                    resultPtr = c_sign_mta(node_1_urlPtr, authTokenPtr, mpcTokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr, passwordPtr)
+                                }
                             }
                         }
                     }
@@ -353,7 +372,8 @@ public func sign_mta(
 /// MTA 프로토콜을 사용한 secp256k1 파생 키 서명
 public func sign_mta_derived(
     node_1_url: String,
-    token: String,
+    auth_token: String,
+    mpc_token: String,
     key_id: String,
     encrypted_share: String,
     secret_store: String,
@@ -365,15 +385,17 @@ public func sign_mta_derived(
     var resultPtr: UnsafeMutablePointer<CChar>?
 
     node_1_url.withCString { node_1_urlPtr in
-        token.withCString { tokenPtr in
-            key_id.withCString { key_idPtr in
-                encrypted_share.withCString { encrypted_sharePtr in
-                    secret_store.withCString { secret_storePtr in
-                        message.withCString { messagePtr in
-                            chain_code.withCString { chain_codePtr in
-                                path.withCString { pathPtr in
-                                    password.withCString { passwordPtr in
-                                        resultPtr = c_sign_mta_derived(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr, chain_codePtr, pathPtr, passwordPtr)
+        auth_token.withCString { authTokenPtr in
+            mpc_token.withCString { mpcTokenPtr in
+                key_id.withCString { key_idPtr in
+                    encrypted_share.withCString { encrypted_sharePtr in
+                        secret_store.withCString { secret_storePtr in
+                            message.withCString { messagePtr in
+                                chain_code.withCString { chain_codePtr in
+                                    path.withCString { pathPtr in
+                                        password.withCString { passwordPtr in
+                                            resultPtr = c_sign_mta_derived(node_1_urlPtr, authTokenPtr, mpcTokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, messagePtr, chain_codePtr, pathPtr, passwordPtr)
+                                        }
                                     }
                                 }
                             }
@@ -397,7 +419,8 @@ public func sign_mta_derived(
 /// 체인코드와 경로를 사용한 파생 키 서명 (secp256k1, ed25519 모두 지원)
 public func sign_with_chain_code(
     node_1_url: String,
-    token: String,
+    auth_token: String,
+    mpc_token: String,
     key_id: String,
     encrypted_share: String,
     secret_store: String,
@@ -410,16 +433,18 @@ public func sign_with_chain_code(
     var resultPtr: UnsafeMutablePointer<CChar>?
 
     node_1_url.withCString { node_1_urlPtr in
-        token.withCString { tokenPtr in
-            key_id.withCString { key_idPtr in
-                encrypted_share.withCString { encrypted_sharePtr in
-                    secret_store.withCString { secret_storePtr in
-                        curve.withCString { curvePtr in
-                            message.withCString { messagePtr in
-                                chain_code.withCString { chain_codePtr in
-                                    path.withCString { pathPtr in
-                                        password.withCString { passwordPtr in
-                                            resultPtr = c_sign_with_chain_code(node_1_urlPtr, tokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr, chain_codePtr, pathPtr, passwordPtr)
+        auth_token.withCString { authTokenPtr in
+            mpc_token.withCString { mpcTokenPtr in
+                key_id.withCString { key_idPtr in
+                    encrypted_share.withCString { encrypted_sharePtr in
+                        secret_store.withCString { secret_storePtr in
+                            curve.withCString { curvePtr in
+                                message.withCString { messagePtr in
+                                    chain_code.withCString { chain_codePtr in
+                                        path.withCString { pathPtr in
+                                            password.withCString { passwordPtr in
+                                                resultPtr = c_sign_with_chain_code(node_1_urlPtr, authTokenPtr, mpcTokenPtr, key_idPtr, encrypted_sharePtr, secret_storePtr, curvePtr, messagePtr, chain_codePtr, pathPtr, passwordPtr)
+                                            }
                                         }
                                     }
                                 }
@@ -483,7 +508,8 @@ public func public_key_with_chain_code(
 public func import_private_key_to_share(
     node_1_url: String,
     node_2_url: String,
-    token: String,
+    auth_token: String,
+    mpc_token: String,
     private_key: String,
     password: String
 ) async -> Result<GenerateShareResponse, MpcError> {
@@ -491,10 +517,12 @@ public func import_private_key_to_share(
 
     node_1_url.withCString { node_1_urlPtr in
         node_2_url.withCString { node_2_urlPtr in
-            token.withCString { tokenPtr in
-                private_key.withCString { private_keyPtr in
-                    password.withCString { passwordPtr in
-                        resultPtr = c_import_private_key_to_share(node_1_urlPtr, node_2_urlPtr, tokenPtr, private_keyPtr, passwordPtr)
+            auth_token.withCString { authTokenPtr in
+                mpc_token.withCString { mpcTokenPtr in
+                    private_key.withCString { private_keyPtr in
+                        password.withCString { passwordPtr in
+                            resultPtr = c_import_private_key_to_share(node_1_urlPtr, node_2_urlPtr, authTokenPtr, mpcTokenPtr, private_keyPtr, passwordPtr)
+                        }
                     }
                 }
             }

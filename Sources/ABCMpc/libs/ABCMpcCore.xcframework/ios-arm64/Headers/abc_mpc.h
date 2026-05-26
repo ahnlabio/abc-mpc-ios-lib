@@ -2,6 +2,7 @@
 #define ABC_MPC_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -89,6 +90,14 @@ extern "C"
                                                const char *token,
                                                const char *private_key,
                                                const char *password);
+
+    extern bool c_verify_secp256k1(const char *message_hex,
+                                   const char *signature_hex,
+                                   const char *public_key_hex);
+
+    extern bool c_verify_ed25519(const char *message_hex,
+                                 const char *signature_hex,
+                                 const char *public_key_hex);
 
     extern void c_string_free(char *s);
 

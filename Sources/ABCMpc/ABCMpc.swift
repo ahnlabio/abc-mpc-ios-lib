@@ -154,7 +154,7 @@ public func generate_share(
     mpc_token: String,
     key_id: String,
     curve: String,
-    password: String? = nil,
+    password: String?,
     version: SecretStoreVersion = .v2
 ) async -> Result<GenerateShareResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
@@ -193,7 +193,7 @@ public func recover_share(
     target_key_id: String,
     source_key_id: String,
     curve: String,
-    password: String? = nil,
+    password: String?,
     version: SecretStoreVersion = .v2
 ) async -> Result<RecoverShareResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
@@ -530,7 +530,7 @@ public func import_private_key_to_share(
     auth_token: String,
     mpc_token: String,
     private_key: String,
-    password: String? = nil,
+    password: String?,
     version: SecretStoreVersion = .v2
 ) async -> Result<GenerateShareResponse, MpcError> {
     var resultPtr: UnsafeMutablePointer<CChar>?
